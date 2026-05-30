@@ -6,18 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 OilyOS is a custom Linux distribution built on Debian 12 (bookworm) with the XFCE desktop. It produces a bootable hybrid ISO that supports both BIOS (isolinux) and UEFI (GRUB EFI) boot, and includes a Calamares graphical installer for installing to disk.
 
-All build scripts live in `build/` and must be run as root (they use `debootstrap`, `chroot`, `mount`, `mksquashfs`, `xorriso`, etc.).
+Build scripts live in `src/`; all generated artifacts land in `build/`. Scripts must be run as root (they use `debootstrap`, `chroot`, `mount`, `mksquashfs`, `xorriso`, etc.).
 
 ## Build pipeline
 
 The build is split into five sequential stages. Run each from the repo root as root:
 
 ```bash
-sudo bash build/01-bootstrap.sh      # debootstrap Debian bookworm into build/rootfs/
-sudo bash build/02-configure.sh      # chroot: install kernel, XFCE, LightDM, live-boot
-sudo bash build/03-branding.sh       # inject /etc/os-release, GRUB config, XFCE defaults
-sudo bash build/04-build-iso.sh      # squashfs + isolinux + GRUB EFI → build/oilyos-1.0.iso
-sudo bash build/05-installer-config.sh  # write Calamares config into rootfs (run before stage 4 if adding installer)
+sudo bash src/01-bootstrap.sh      # debootstrap Debian bookworm into build/rootfs/
+sudo bash src/02-configure.sh      # chroot: install kernel, XFCE, LightDM, live-boot
+sudo bash src/03-branding.sh       # inject /etc/os-release, GRUB config, XFCE defaults
+sudo bash src/05-installer-config.sh  # write Calamares config into rootfs (run before stage 4)
+sudo bash src/04-build-iso.sh      # squashfs + isolinux + GRUB EFI → build/oilyos-1.0.iso
 ```
 
 `build/rootfs/` is the live filesystem root — all OS customisation happens there (directly or via chroot).  
@@ -28,10 +28,10 @@ sudo bash build/05-installer-config.sh  # write Calamares config into rootfs (ru
 
 | Concern | Where it lives |
 |---|---|
-| Base OS + packages | `02-configure.sh` (chroot script embedded via heredoc) |
-| Branding & XFCE defaults | `03-branding.sh` → `rootfs/etc/os-release`, `rootfs/usr/share/oilyos/`, `rootfs/home/oily/.config/autostart/` |
-| Boot loaders | `04-build-iso.sh` — isolinux for BIOS, `grub-mkstandalone` EFI image for UEFI |
-| Graphical installer | `05-installer-config.sh` → `rootfs/etc/calamares/` (settings.conf, module configs, branding) |
+| Base OS + packages | `src/02-configure.sh` (chroot script embedded via heredoc) |
+| Branding & XFCE defaults | `src/03-branding.sh` → `build/rootfs/etc/os-release`, `build/rootfs/usr/share/oilyos/`, `build/rootfs/home/oily/.config/autostart/` |
+| Boot loaders | `src/04-build-iso.sh` — isolinux for BIOS, `grub-mkstandalone` EFI image for UEFI |
+| Graphical installer | `src/05-installer-config.sh` → `build/rootfs/etc/calamares/` (settings.conf, module configs, branding) |
 | Live session user | username `oily`, password `oily`; autologin via LightDM |
 
 ## Key host dependencies
